@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-import xgboost as xgb
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.tree import DecisionTreeRegressor
 import pickle
 
 # Load data
@@ -24,7 +24,7 @@ if page == "Home":
     This application helps you predict the price of a car based on various features such as age, mileage, engine size, and more. 
     You can also visualize how different features affect the price.
     """)
-    st.image("car_image.jpeg", caption="Predict your car price with our app!",use_column_width=True )  
+    st.image("car_image.jpeg", caption="Predict your car price with our app!", use_column_width=True)  
 
     st.subheader("How it Works")
     st.write("""
@@ -69,7 +69,7 @@ elif page == "Prediction":
     # Load or train the model
     def load_model():
         try:
-            with open("auto_scout_advanced_model.pkl", "rb") as file:
+            with open("auto_scout_decision_tree_model.pkl", "rb") as file:
                 model = pickle.load(file)
         except FileNotFoundError:
             model = train_model()
@@ -90,21 +90,21 @@ elif page == "Prediction":
             ('cat', categorical_transformer, categorical_features)])
 
         model = Pipeline(steps=[('preprocessor', preprocessor),
-                                ('regressor', xgb.XGBRegressor(objective='reg:squarederror'))])
+                                ('regressor', DecisionTreeRegressor(random_state=42))])
 
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
         param_grid = {
-            'regressor__n_estimators': [100, 200],
-            'regressor__max_depth': [3, 5, 7],
-            'regressor__learning_rate': [0.01, 0.1, 0.3],
+            'regressor__max_depth': [3, 5, 7, 10],
+            'regressor__min_samples_split': [2, 5, 10],
+            'regressor__min_samples_leaf': [1, 2, 4]
         }
 
         grid_search = GridSearchCV(model, param_grid, cv=3, scoring='neg_mean_absolute_error')
         grid_search.fit(X_train, y_train)
 
         best_model = grid_search.best_estimator_
-        with open("auto_scout_advanced_model.pkl", "wb") as file:
+        with open("auto_scout_decision_tree_model.pkl", "wb") as file:
             pickle.dump(best_model, file)
 
         return best_model

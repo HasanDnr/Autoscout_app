@@ -1,5 +1,5 @@
 scikit-learn
 streamlit
-xgboost
+sklearn
 matplotlib 
 seaborn
